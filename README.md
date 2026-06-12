@@ -431,5 +431,5 @@ This project is an independent wrapper and is not officially affiliated with Ear
 ## Support
 
 If this project helps you, you can support it here:
-
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/gogospelnow)
 https://www.buymeacoffee.com/gogospelnow
