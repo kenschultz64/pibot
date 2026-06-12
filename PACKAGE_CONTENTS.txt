@@ -1,0 +1,19 @@
+PiBot package contents
+
+Recommended Docker files:
+- README.md
+- PI_OPENWEBUI_TAILSCALE_SETUP.md
+- LICENSE
+- LICENSE-PI
+- Dockerfile.pi-bridge
+- start-pibot-docker.ps1
+- start-pibot-docker.sh
+- .bridge-key.example
+- .file-key.example
+
+Bridge app:
+- package.json
+- package-lock.json
+- src/server.js
+
+Legacy direct-host launchers are included for development only. Prefer Docker for Open WebUI.

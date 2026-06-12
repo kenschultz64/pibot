@@ -1,0 +1,16 @@
+node_modules
+.git
+.bridge-key
+.file-key
+*.zip
+*.pptx
+*.pdf
+bridge.out.log
+bridge.err.log
+NUL
+agentbrowser
+headlesspiharness
+pibot-package
+tools
+web
+ken

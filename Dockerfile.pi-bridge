@@ -1,0 +1,36 @@
+FROM node:24-bookworm-slim
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      bash \
+      python3 \
+      python3-pip \
+      python3-venv \
+      python-is-python3 \
+      git \
+      curl \
+      ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g @earendil-works/pi-coding-agent
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY src ./src
+
+RUN mkdir -p /workspace
+
+EXPOSE 11435
+
+ENV HOST=0.0.0.0 \
+    PORT=11435 \
+    PI_WORKSPACE=/workspace \
+    PI_TOOLS=read,bash,edit,write,grep,find,ls \
+    PI_SHOW_PROGRESS=true
+
+SHELL ["/bin/bash", "-lc"]
+
+CMD ["node", "src/server.js"]
