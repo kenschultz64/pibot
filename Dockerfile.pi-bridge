@@ -1,5 +1,7 @@
 FROM node:24-bookworm-slim
 
+USER root
+
 WORKDIR /app
 
 RUN apt-get update \
@@ -21,7 +23,8 @@ RUN npm ci --omit=dev
 
 COPY src ./src
 
-RUN mkdir -p /workspace
+RUN mkdir -p /workspace /home/node/.pi/agent \
+    && chown -R node:node /workspace /home/node/.pi
 
 EXPOSE 11435
 
@@ -29,7 +32,8 @@ ENV HOST=0.0.0.0 \
     PORT=11435 \
     PI_WORKSPACE=/workspace \
     PI_TOOLS=read,bash,edit,write,grep,find,ls \
-    PI_SHOW_PROGRESS=true
+    PI_SHOW_PROGRESS=true \
+    HOME=/home/node
 
 SHELL ["/bin/bash", "-lc"]
 

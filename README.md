@@ -50,22 +50,29 @@ $fileKey = (Get-Content .\.file-key -Raw).Trim()
 docker run -d `
   --name pibot `
   --restart unless-stopped `
-  -p 11436:11435 `
+  --user node `
+  --cap-drop=ALL `
+  --security-opt no-new-privileges:true `
+  -p 127.0.0.1:11436:11435 `
   -e PI_BRIDGE_API_KEY="$bridgeKey" `
   -e PI_FILE_DOWNLOAD_KEY="$fileKey" `
   -e PI_PUBLIC_BASE_URL="http://127.0.0.1:11436" `
   -e PI_WORKSPACE="/workspace" `
   -e PI_TOOLS="read,bash,edit,write,grep,find,ls" `
+  -e HOME="/home/node" `
   -v pibot-workspace:/workspace `
-  -v "$env:USERPROFILE\.pi\agent:/root/.pi/agent" `
+  -v "$env:USERPROFILE\.pi\agent:/home/node/.pi/agent:ro" `
   pibot:latest
 ```
 
 If Open WebUI is on another machine or accessed over Tailscale, set `PI_PUBLIC_BASE_URL` to that reachable address, for example:
 
 ```powershell
+-p 100.x.y.z:11436:11435
 -e PI_PUBLIC_BASE_URL="http://100.x.y.z:11436"
 ```
+
+The included launch scripts use these same hardened defaults. See [SECURITY.md](SECURITY.md) for the rationale and verification commands.
 
 ---
 
@@ -205,11 +212,11 @@ For dependencies you always need, add them to `Dockerfile.pi-bridge` and rebuild
 
 ## Pi model/settings used by Docker
 
-The recommended Docker command mounts your existing Pi settings:
+The hardened Docker command mounts your existing Pi settings read-only:
 
 ```text
 Windows: %USERPROFILE%\.pi\agent
-Docker:  /root/.pi/agent
+Docker:  /home/node/.pi/agent
 ```
 
 So model settings are still edited on Windows here:
@@ -345,6 +352,8 @@ If running direct mode, bind carefully, use a strong `.bridge-key`, and expose i
 | `PI_SHOW_PROGRESS` | `true` | Stream progress messages such as tool start/end |
 | `PI_PROVIDER` | unset | Optional provider override |
 | `PI_MODEL` | unset | Optional model override |
+| `BIND_HOST` | launcher default `127.0.0.1` | Docker launcher host interface to publish on; use a Tailscale IP for trusted remote Open WebUI |
+| `PI_AGENT_DIR` | launcher default `$HOME/.pi/agent` | Host Pi config/auth directory mounted read-only into the container |
 
 Tool examples:
 
@@ -380,13 +389,13 @@ If PiBot answers normally but does not seem to run shell/file commands, check th
 - Mount your Pi agent config/auth if you want the container to use the same Pi provider/model setup as your host:
 
   ```bash
-  -v "$HOME/.pi/agent:/root/.pi/agent"
+  -v "$HOME/.pi/agent:/home/node/.pi/agent:ro"
   ```
 
   On Windows PowerShell this is usually:
 
   ```powershell
-  -v "$env:USERPROFILE\.pi\agent:/root/.pi/agent"
+  -v "$env:USERPROFILE\.pi\agent:/home/node/.pi/agent:ro"
   ```
 
 - Rebuild after changing package files or server code:
@@ -412,9 +421,14 @@ ls -la /workspace
 
 - Treat the bridge like remote shell access when `bash`, `edit`, or `write` tools are enabled.
 - Prefer Docker for Open WebUI so tools are contained to `/workspace`.
+- Bind the published Docker port to `127.0.0.1` or a trusted Tailscale/VPN IP, not every interface.
+- Run as a non-root container user when possible.
+- Mount Pi auth/config read-only.
+- Use Docker hardening such as `--cap-drop=ALL` and `--security-opt no-new-privileges:true`.
 - Do not commit `.bridge-key` or `.file-key`.
 - Use Tailscale/VPN/firewall rules where possible.
 - Rotate keys if they are pasted into chat, logs, screenshots, or documentation.
+- See [SECURITY.md](SECURITY.md) for the full hardening guide.
 
 ---
 
@@ -424,7 +438,7 @@ This project is an independent wrapper and is not officially affiliated with Ear
 
 - **Core Engine:** Built using `@earendil-works/pi-agent-core` and `@earendil-works/pi-ai` under the MIT License.
 - **Shoutout:** Huge thanks to Mario Zechner and the Earendil Works contributors for creating Pi!
-- **License:** This endpoint wrapper is released under the MIT License. See [LICENSE-PI](LICENSE-PI) for the Pi core engine MIT notice, including `Copyright (c) 2025 Mario Zechner / Earendil Works`.
+- **License:** This endpoint wrapper is released under the MIT License. See [NOTICE.md](NOTICE.md) for the Pi core engine MIT notice, including `Copyright (c) 2025 Mario Zechner / Earendil Works`.
 
 ---
 

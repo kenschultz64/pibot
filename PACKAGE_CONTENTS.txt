@@ -4,7 +4,8 @@ Recommended Docker files:
 - README.md
 - PI_OPENWEBUI_TAILSCALE_SETUP.md
 - LICENSE
-- LICENSE-PI
+- NOTICE.md
+- SECURITY.md
 - Dockerfile.pi-bridge
 - start-pibot-docker.ps1
 - start-pibot-docker.sh

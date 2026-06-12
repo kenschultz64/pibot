@@ -40,35 +40,29 @@ Do not paste real keys into documentation or screenshots.
 
 ## 3. Build and run Docker container
 
-Replace `100.x.y.z` with your Tailscale IP:
+Replace `100.x.y.z` with your Tailscale IP. The launcher builds the image, starts the container as a non-root user, binds only to the Tailscale IP, mounts Pi config read-only, and applies Docker hardening flags.
 
 ```powershell
-docker build -f Dockerfile.pi-bridge -t pibot:latest .
-docker rm -f pibot 2>$null
+.\start-pibot-docker.ps1 `
+  -BindHost "100.x.y.z" `
+  -PublicBaseUrl "http://100.x.y.z:11436"
+```
 
-$bridgeKey = (Get-Content .\.bridge-key -Raw).Trim()
-$fileKey = (Get-Content .\.file-key -Raw).Trim()
-$publicBaseUrl = "http://100.x.y.z:11436"
+Equivalent hardening flags used by the launcher:
 
-docker run -d `
-  --name pibot `
-  --restart unless-stopped `
-  -p 11436:11435 `
-  -e PI_BRIDGE_API_KEY="$bridgeKey" `
-  -e PI_FILE_DOWNLOAD_KEY="$fileKey" `
-  -e PI_PUBLIC_BASE_URL="$publicBaseUrl" `
-  -e PI_WORKSPACE="/workspace" `
-  -e PI_TOOLS="read,bash,edit,write,grep,find,ls" `
-  -v pibot-workspace:/workspace `
-  -v "$env:USERPROFILE\.pi\agent:/root/.pi/agent" `
-  pibot:latest
+```text
+--user node
+--cap-drop=ALL
+--security-opt no-new-privileges:true
+-p 100.x.y.z:11436:11435
+-v <your Pi agent dir>:/home/node/.pi/agent:ro
 ```
 
 ## 4. Test from Windows
 
 ```powershell
 $key = (Get-Content .\.bridge-key -Raw).Trim()
-curl.exe http://127.0.0.1:11436/v1/models -H "Authorization: Bearer $key"
+curl.exe "http://100.x.y.z:11436/v1/models?key=$key"
 ```
 
 ## 5. Test from Open WebUI host/container
@@ -76,15 +70,13 @@ curl.exe http://127.0.0.1:11436/v1/models -H "Authorization: Bearer $key"
 From the host running Open WebUI:
 
 ```bash
-curl http://100.x.y.z:11436/v1/models \
-  -H "Authorization: Bearer YOUR_BRIDGE_KEY"
+curl "http://100.x.y.z:11436/v1/models?key=YOUR_BRIDGE_KEY"
 ```
 
 If Open WebUI is in Docker, test from inside that container too:
 
 ```bash
-docker exec -it open-webui curl http://100.x.y.z:11436/v1/models \
-  -H "Authorization: Bearer YOUR_BRIDGE_KEY"
+docker exec -it open-webui curl "http://100.x.y.z:11436/v1/models?key=YOUR_BRIDGE_KEY"
 ```
 
 If the host works but the Open WebUI container fails, the Open WebUI container cannot route to Tailscale. Fix Docker networking or run PiBot on the same host as Open WebUI.
@@ -157,7 +149,7 @@ If PiBot responds but does not run shell/file commands, verify:
 - Your Pi auth/config is mounted if needed:
 
   ```powershell
-  -v "$env:USERPROFILE\.pi\agent:/root/.pi/agent"
+  -v "$env:USERPROFILE\.pi\agent:/home/node/.pi/agent:ro"
   ```
 
 - The image was rebuilt after changes:
@@ -181,4 +173,4 @@ The non-Docker bridge scripts still work, but direct mode exposes the host works
 
 ## Credits & Attribution
 
-This project is an independent wrapper and is not officially affiliated with Earendil Works. It is built using `@earendil-works/pi-agent-core` and `@earendil-works/pi-ai` under the MIT License. Huge thanks to Mario Zechner and the Earendil Works contributors for creating Pi. This endpoint wrapper is released under the MIT License; see `LICENSE-PI` for the core engine's copyright notice.
+This project is an independent wrapper and is not officially affiliated with Earendil Works. It is built using `@earendil-works/pi-agent-core` and `@earendil-works/pi-ai` under the MIT License. Huge thanks to Mario Zechner and the Earendil Works contributors for creating Pi. This endpoint wrapper is released under the MIT License; see `NOTICE.md` for the core engine's copyright notice.
